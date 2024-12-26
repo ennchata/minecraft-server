@@ -1,0 +1,44 @@
+services:
+  minecraft-nginx:
+    image: nginx:1.27.3
+    volumes:
+      - ./nginx:/usr/share/nginx/html
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.minecraft-nginx.rule: "Host(`${HOST}`)"
+      traefik.http.routers.minecraft-nginx.entrypoints: "websecure"
+      traefik.http.routers.minecraft-nginx.tls: "true"
+      traefik.http.routers.minecraft-nginx.tls.certresolver: "letsencrypt"
+    networks:
+      - proxy
+  minecraft:
+    image: itzg/minecraft-server
+    tty: true
+    stdin_open: true
+    environment:
+      EULA: "true"
+      MOTD: "Antwerpfurs Minecraft server"
+      ICON: "https://enneya.s-ul.eu/w0guBxeq.jpg"
+      WHITELIST: "zhuxiaoyan"
+      EXISTING_WHITELIST_FILE: "merge"
+      OPS: "zhuxiaoyan"
+      EXISTING_OPS_FILE: "merge"
+      VERSION: "1.21.1"
+      DIFFICULTY: "hard"
+      SPAWN_PROTECTION: "0"
+    volumes:
+      - minecraft-data:/data
+    labels:
+      traefik.enable: "true"
+      traefik.tcp.routers.minecraft.rule: "HostSNI(`*`)"
+      traefik.tcp.routers.minecraft.entrypoints: "minecraft"
+    networks:
+      - proxy
+
+volumes:
+  minecraft-data:
+
+networks:
+  proxy:
+    name: proxy
+    external: true
